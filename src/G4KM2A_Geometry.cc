@@ -30,8 +30,25 @@
 using namespace std;
 int G4KM2A_Geometry::Flag=2;
 int G4KM2A_Geometry::IsMC=0;
+std::string G4KM2A_Geometry::sConfigPath = "./config";
 
 G4KM2A_Geometry * G4KM2A_Geometry::m_myself = 0;
+
+// 设置配置文件路径
+void G4KM2A_Geometry::SetConfigPath(const std::string& path) {
+    sConfigPath = path;
+    cout << "Config path set to: " << sConfigPath << endl;
+}
+
+// 获取配置文件路径
+std::string G4KM2A_Geometry::GetConfigPath() {
+    return sConfigPath;
+}
+
+// 辅助函数：构建完整的配置文件路径
+static std::string GetConfigFilePath(const std::string& filename) {
+    return G4KM2A_Geometry::GetConfigPath() + "/" + filename;
+}
 G4KM2A_Geometry::G4KM2A_Geometry(int tFlag)
 {
     Flag=tFlag;
@@ -46,39 +63,39 @@ G4KM2A_Geometry::G4KM2A_Geometry(int tFlag)
   if(Flag<20210720){
     IsMC=1;
     if(Flag==0){//calibration mode
-        ReadFileED("./config/ED_pos_unit.txt");
-        ReadFileMD("./config/MD_pos_unit.txt");
+        ReadFileED(GetConfigFilePath("ED_pos_unit.txt").c_str());
+        ReadFileMD(GetConfigFilePath("MD_pos_unit.txt").c_str());
     }
     else if(Flag==1){ //KM2A@ybj 
-        ReadFileED("./config/ED_pos_ybj.txt");
-        ReadFileMD("./config/MD_pos_ybj.txt");
+        ReadFileED(GetConfigFilePath("ED_pos_ybj.txt").c_str());
+        ReadFileMD(GetConfigFilePath("MD_pos_ybj.txt").c_str());
     }
     else if(Flag==2){ //KM2A-33ED 
-        ReadFileED("./config/ED_pos_33.txt");
-        ReadFileMD("./config/MD_pos_0.txt");
+        ReadFileED(GetConfigFilePath("ED_pos_33.txt").c_str());
+        ReadFileMD(GetConfigFilePath("MD_pos_0.txt").c_str());
     }
     else if(Flag==3){ //KM2A-71ED+10MD 
-        ReadFileED("./config/ED_pos_71.txt");
-        ReadFileMD("./config/MD_pos_10.txt");
+        ReadFileED(GetConfigFilePath("ED_pos_71.txt").c_str());
+        ReadFileMD(GetConfigFilePath("MD_pos_10.txt").c_str());
     }
     else if(Flag==4){ //KM2A-quarter
-        ReadFileED("./config/ED_pos_quarter.txt");
-        ReadFileMD("./config/MD_pos_quarter.txt");
+        ReadFileED(GetConfigFilePath("ED_pos_quarter.txt").c_str());
+        ReadFileMD(GetConfigFilePath("MD_pos_quarter.txt").c_str());
     }
     else if(Flag==5){ //KM2A-half 
-        ReadFileED("./config/ED_pos_half.txt");
-        ReadFileMD("./config/MD_pos_half.txt");
-        //ReadFileMD("./config/MD_pos_halfnew.txt"); for MC 
+        ReadFileED(GetConfigFilePath("ED_pos_half.txt").c_str());
+        ReadFileMD(GetConfigFilePath("MD_pos_half.txt").c_str());
+        //ReadFileMD(GetConfigFilePath("MD_pos_halfnew.txt").c_str()); for MC 
     }
     else if(Flag==6){ //KM2A_3/4
-        ReadFileED("./config/ED_pos_3978.txt");
-        ReadFileMD("./config/MD_pos_917.txt");
+        ReadFileED(GetConfigFilePath("ED_pos_3978.txt").c_str());
+        ReadFileMD(GetConfigFilePath("MD_pos_917.txt").c_str());
     }
     else if(Flag==7){ //KM2A_all for MC
-      //  ReadFileED("./config/ED_pos_5216.txt");
-      //  ReadFileMD("./config/MD_pos_1188.txt");
-        ReadFileED("./config/ED_pos_all.txt");
-        ReadFileMD("./config/MD_pos_all.txt");
+      //  ReadFileED(GetConfigFilePath("ED_pos_5216.txt").c_str());
+      //  ReadFileMD(GetConfigFilePath("MD_pos_1188.txt").c_str());
+        ReadFileED(GetConfigFilePath("ED_pos_all.txt").c_str());
+        ReadFileMD(GetConfigFilePath("MD_pos_all.txt").c_str());
     }
     else {
         cout<<" No G4KM2A_Geometry !!!"<<endl;
@@ -87,27 +104,27 @@ G4KM2A_Geometry::G4KM2A_Geometry(int tFlag)
   }
   else {
       IsMC=0;
-      ReadFileMD("./config/MD_pos_1188.txt");
+      ReadFileMD(GetConfigFilePath("MD_pos_1188.txt").c_str());
       if(Flag>20191224&&Flag<20201201){
-          ReadFileED("./config/ED_pos_half.txt");
+          ReadFileED(GetConfigFilePath("ED_pos_half.txt").c_str());
       }
       else if(Flag>20201130&&Flag<20210720){
-          ReadFileED("./config/ED_pos_3978.txt");
+          ReadFileED(GetConfigFilePath("ED_pos_3978.txt").c_str());
       }
       else if(Flag>20210719&&Flag<20210807){
-          ReadFileED("./config/ED_pos_5216up_20210720.txt");
+          ReadFileED(GetConfigFilePath("ED_pos_5216up_20210720.txt").c_str());
       }
       else if(Flag>20210806&&Flag<20220526){
-          ReadFileED("./config/ED_pos_5216up_20210807.txt");
+          ReadFileED(GetConfigFilePath("ED_pos_5216up_20210807.txt").c_str());
       }
       else if(Flag>20220525&&Flag<20220601){
-          ReadFileED("./config/ED_pos_5216up_20220520.txt");
+          ReadFileED(GetConfigFilePath("ED_pos_5216up_20220520.txt").c_str());
       }
       else if(Flag>20220531&&Flag<20220705){
-          ReadFileED("./config/ED_pos_5216up_20220601.txt");
+          ReadFileED(GetConfigFilePath("ED_pos_5216up_20220601.txt").c_str());
       }
       else if(Flag>20220704){
-          ReadFileED("./config/ED_pos_5216up_20220705.txt");
+          ReadFileED(GetConfigFilePath("ED_pos_5216up_20220705.txt").c_str());
       } 
   }
     //adjust the range for detector range

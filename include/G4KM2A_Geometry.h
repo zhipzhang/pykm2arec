@@ -40,9 +40,14 @@ class G4KM2A_Geometry
      ~G4KM2A_Geometry();
      G4KM2A_Geometry(int tFlag);
 
+     // 配置文件路径设置
+     static void SetConfigPath(const std::string& path);
+     static std::string GetConfigPath();
+
   private:
      static G4KM2A_Geometry * m_myself;
      static int Flag;
+     static std::string sConfigPath;
   public:
      void ReadFileED(const char filename[100]);
      void ReadFileMD(const char filename[100]);

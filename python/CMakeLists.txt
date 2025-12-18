@@ -81,3 +81,6 @@ install(CODE "
     endif()
 ")
 
+# 安装配置文件目录
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/config/ DESTINATION pykm2arec/config)
+
