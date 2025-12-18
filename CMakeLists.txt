@@ -70,3 +70,6 @@ add_executable(LHAASOFit src/LHAASOFit.cc)
 
 # Link the static library and ROOT libraries to the executable
 target_link_libraries(LHAASOFit LHAASOFitLib ${ROOT_LIBRARIES})
+
+add_subdirectory(test)
+add_subdirectory(python)
