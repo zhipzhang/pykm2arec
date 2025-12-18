@@ -9,12 +9,43 @@
  */
  struct KM2AMCEvent {
     // 来自event_info树
-    int eve_id = -1;
-    int eve_trig = -1;
-    double eve_ene = 0.0;
-    double eve_corex = 0.0;
-    double eve_corey = 0.0;
+    int eventid() const
+    {
+        return lhevent->GetEvN();
+    }
+    double energy() const
+    {
+        return lhevent->GetE();
+    }
+    double corex() const
+    {
+        return lhevent->GetCorex();
+    }
+    double corey() const
+    {
+        return lhevent->GetCorey();
+    }
+    double altitude() const
+    {
+        return lhevent->GetTheta();
+    }
+    double azimuth() const
+    {
+        return lhevent->GetPhi();
+    }
 
+    int NHitsE() const
+    {
+        return lhevent->GetNhitE();
+    }
+    int NHitsM() const
+    {
+        return lhevent->GetNhitM();
+    }
+    int NHitsW() const
+    {
+        return lhevent->GetNhitW();
+    }
     // LHEvent指针（直接复用）
     LHEvent* lhevent = nullptr;
     LHHit* GetHitE(int index) {

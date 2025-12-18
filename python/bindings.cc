@@ -159,11 +159,15 @@ NB_MODULE(_pykm2arec, m) {
     nb::class_<KM2AMCEvent>(m, "KM2AMCEvent")
         .def(nb::init<>())
         // event_info fields
-        .def_rw("eve_id", &KM2AMCEvent::eve_id)
-        .def_rw("eve_trig", &KM2AMCEvent::eve_trig)
-        .def_rw("eve_ene", &KM2AMCEvent::eve_ene)
-        .def_rw("eve_corex", &KM2AMCEvent::eve_corex)
-        .def_rw("eve_corey", &KM2AMCEvent::eve_corey)
+        .def_prop_ro("eventid", &KM2AMCEvent::eventid)
+        .def_prop_ro("energy", &KM2AMCEvent::energy)
+        .def_prop_ro("corex", &KM2AMCEvent::corex)
+        .def_prop_ro("corey", &KM2AMCEvent::corey)
+        .def_prop_ro("altitude", &KM2AMCEvent::altitude)
+        .def_prop_ro("azimuth", &KM2AMCEvent::azimuth)
+        .def_prop_ro("nhitse", &KM2AMCEvent::NHitsE)
+        .def_prop_ro("nhitsm", &KM2AMCEvent::NHitsM)
+        .def_prop_ro("nhitsw", &KM2AMCEvent::NHitsW)
         // LHEvent pointer
         .def_prop_ro("lhevent", [](KM2AMCEvent& ev) { return ev.lhevent; }, 
                      nb::rv_policy::reference)
@@ -171,15 +175,21 @@ NB_MODULE(_pykm2arec, m) {
         .def("GetHitE", &KM2AMCEvent::GetHitE, nb::rv_policy::reference)
         .def("GetHitM", &KM2AMCEvent::GetHitM, nb::rv_policy::reference)
         .def("GetHitW", &KM2AMCEvent::GetHitW, nb::rv_policy::reference)
-        .def("__repr__", [](const KM2AMCEvent& ev) {
-            std::string repr = "KM2AMCEvent(eve_id=" + std::to_string(ev.eve_id);
-            repr += ", eve_ene=" + std::to_string(ev.eve_ene);
-            if (ev.lhevent) {
-                repr += ", E=" + std::to_string(ev.lhevent->GetE());
-                repr += ", NhitE=" + std::to_string(ev.lhevent->GetNhitE());
+        .def_prop_ro("HitsE", [](KM2AMCEvent& ev) {
+            nb::list res;
+            for (int i = 0; i < ev.NHitsE(); i++) {
+                res.append(ev.GetHitE(i));
             }
-            repr += ")";
-            return repr;
+            return res;
+
+        }, nb::rv_policy::reference)
+        .def("__repr__", [](const KM2AMCEvent& ev) {
+            return "KM2AMCEvent(event_id=" + std::to_string(ev.eventid()) +
+                   ", energy=" + std::to_string(ev.energy()) +
+                   ", corex=" + std::to_string(ev.corex()) +
+                   ", corey=" + std::to_string(ev.corey()) +
+                   ", altitude=" + std::to_string(ev.altitude()) +
+                   ", azimuth=" + std::to_string(ev.azimuth());
         });
 
     // ========================================================================

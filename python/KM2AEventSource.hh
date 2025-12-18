@@ -174,16 +174,6 @@ public:
         KM2AMCEvent data;
 
         // 读取event_info（如果索引在范围内）
-        if (index < n_event_info_entries_) {
-            event_info_tree_->GetEntry(index);
-            data.eve_id = br_eve_id_;
-            data.eve_trig = br_eve_trig_;
-            data.eve_ene = br_eve_ene_;
-            data.eve_corex = br_eve_corex_;
-            data.eve_corey = br_eve_corey_;
-        }
-
-        // 读取event树
         event_tree_->GetEntry(index);
         data.lhevent = lhevent_;
 
