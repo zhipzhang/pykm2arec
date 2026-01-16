@@ -395,5 +395,145 @@ NB_MODULE(_pykm2arec, m) {
         .def("__repr__", [](const KM2AReconstructor& rec) {
             return "KM2AReconstructor(array_flag=" + std::to_string(rec.getArrayFlag()) + ")";
         });
+
+    // ========================================================================
+    // G4KM2A_Geometry class - Detector geometry and coordinates
+    // ========================================================================
+    nb::class_<G4KM2A_Geometry>(m, "G4KM2A_Geometry")
+        .def(nb::init<int>(), nb::arg("flag"),
+             "Create a geometry instance with specified flag:\n"
+             "  0: calibration mode\n"
+             "  1: KM2A@ybj\n"
+             "  2: KM2A-33ED\n"
+             "  3: KM2A-71ED+10MD\n"
+             "  4: KM2A-quarter\n"
+             "  5: KM2A-half\n"
+             "  6: KM2A-3/4\n"
+             "  7: KM2A-all for MC\n"
+             "  >20210720: Data mode with date-based ED config")
+        // Static methods for config path
+        .def_static("set_config_path", &G4KM2A_Geometry::SetConfigPath,
+                    nb::arg("path"), "Set the config directory path")
+        .def_static("get_config_path", &G4KM2A_Geometry::GetConfigPath,
+                    "Get the current config directory path")
+        // Singleton accessor
+        .def_static("get_instance", &G4KM2A_Geometry::GetInstance,
+                    nb::arg("flag"), nb::rv_policy::reference,
+                    "Get the singleton instance of geometry")
+        // Number of detectors
+        .def("get_ned", &G4KM2A_Geometry::GetNED, "Get number of ED detectors")
+        .def("get_nmd", &G4KM2A_Geometry::GetNMD, "Get number of MD detectors")
+        .def("get_nwcda", &G4KM2A_Geometry::GetNWCDA, "Get number of WCDA detectors")
+        .def_prop_ro("ned", &G4KM2A_Geometry::GetNED, "Number of ED detectors")
+        .def_prop_ro("nmd", &G4KM2A_Geometry::GetNMD, "Number of MD detectors")
+        .def_prop_ro("nwcda", &G4KM2A_Geometry::GetNWCDA, "Number of WCDA detectors")
+        // Get detector ID from array index
+        .def("get_ed_id", &G4KM2A_Geometry::GetEDId, nb::arg("index"),
+             "Get ED real ID from array index")
+        .def("get_md_id", &G4KM2A_Geometry::GetMDId, nb::arg("index"),
+             "Get MD real ID from array index")
+        .def("get_wcda_id", &G4KM2A_Geometry::GetWCDAId, nb::arg("index"),
+             "Get WCDA real ID from array index")
+        // Get array index from real ID
+        .def("get_ed_id2", &G4KM2A_Geometry::GetEDId2, nb::arg("real_id"),
+             "Get ED array index from real ID (-1 if not found)")
+        .def("get_md_id2", &G4KM2A_Geometry::GetMDId2, nb::arg("real_id"),
+             "Get MD array index from real ID (-1 if not found)")
+        .def("get_wcda_id2", &G4KM2A_Geometry::GetWCDAId2, nb::arg("real_id"),
+             "Get WCDA array index from real ID (-1 if not found)")
+        // Get detector coordinates - returns tuple (x, y, z) or None if invalid
+        .def("get_ed_xyz", [](G4KM2A_Geometry& geo, int id, int flag) -> nb::object {
+            double x, y, z;
+            int result = geo.GetEDxyz(id, x, y, z, flag);
+            if (result < 0) return nb::none();
+            return nb::make_tuple(x, y, z);
+        }, nb::arg("id"), nb::arg("flag") = 1,
+           "Get ED coordinates (x, y, z) by ID.\n"
+           "  flag=0: id is array index\n"
+           "  flag=1: id is real detector ID\n"
+           "Returns tuple (x, y, z) or None if ID is invalid")
+        .def("get_md_xyz", [](G4KM2A_Geometry& geo, int id, int flag) -> nb::object {
+            double x, y, z;
+            int result = geo.GetMDxyz(id, x, y, z, flag);
+            if (result < 0) return nb::none();
+            return nb::make_tuple(x, y, z);
+        }, nb::arg("id"), nb::arg("flag") = 1,
+           "Get MD coordinates (x, y, z) by ID.\n"
+           "  flag=0: id is array index\n"
+           "  flag=1: id is real detector ID\n"
+           "Returns tuple (x, y, z) or None if ID is invalid")
+        .def("get_wcda_xyz", [](G4KM2A_Geometry& geo, int id, int flag) -> nb::object {
+            double x, y, z;
+            int result = geo.GetWCDAxyz(id, x, y, z, flag);
+            if (result < 0) return nb::none();
+            return nb::make_tuple(x, y, z);
+        }, nb::arg("id"), nb::arg("flag") = 1,
+           "Get WCDA coordinates (x, y, z) by ID.\n"
+           "  flag=0: id is array index\n"
+           "  flag=1: id is real detector ID\n"
+           "Returns tuple (x, y, z) or None if ID is invalid")
+        // Get all ED coordinates as list of tuples
+        .def("get_all_ed_xyz", [](G4KM2A_Geometry& geo) {
+            nb::list result;
+            int ned = geo.GetNED();
+            for (int i = 0; i < ned; i++) {
+                double x, y, z;
+                geo.GetEDxyz(i, x, y, z, 0);  // flag=0 for array index
+                result.append(nb::make_tuple(geo.GetEDId(i), x, y, z));
+            }
+            return result;
+        }, "Get all ED coordinates as list of (id, x, y, z) tuples")
+        // Get all MD coordinates as list of tuples
+        .def("get_all_md_xyz", [](G4KM2A_Geometry& geo) {
+            nb::list result;
+            int nmd = geo.GetNMD();
+            for (int i = 0; i < nmd; i++) {
+                double x, y, z;
+                geo.GetMDxyz(i, x, y, z, 0);  // flag=0 for array index
+                result.append(nb::make_tuple(geo.GetMDId(i), x, y, z));
+            }
+            return result;
+        }, "Get all MD coordinates as list of (id, x, y, z) tuples")
+        // Get all WCDA coordinates as list of tuples
+        .def("get_all_wcda_xyz", [](G4KM2A_Geometry& geo) {
+            nb::list result;
+            int nwcda = geo.GetNWCDA();
+            for (int i = 0; i < nwcda; i++) {
+                double x, y, z;
+                geo.GetWCDAxyz(i, x, y, z, 0);  // flag=0 for array index
+                result.append(nb::make_tuple(geo.GetWCDAId(i), x, y, z));
+            }
+            return result;
+        }, "Get all WCDA coordinates as list of (id, x, y, z) tuples")
+        // Range getters
+        .def("get_range_x", [](G4KM2A_Geometry& geo) {
+            double minx, maxx;
+            geo.GetRangeX(minx, maxx);
+            return nb::make_tuple(minx, maxx);
+        }, "Get X range as tuple (min, max)")
+        .def("get_range_y", [](G4KM2A_Geometry& geo) {
+            double miny, maxy;
+            geo.GetRangeY(miny, maxy);
+            return nb::make_tuple(miny, maxy);
+        }, "Get Y range as tuple (min, max)")
+        .def("get_range_z", [](G4KM2A_Geometry& geo) {
+            double minz, maxz;
+            geo.GetRangeZ(minz, maxz);
+            return nb::make_tuple(minz, maxz);
+        }, "Get Z range as tuple (min, max)")
+        // ED rotation
+        .def("get_rotation_ed", &G4KM2A_Geometry::GetRotationED,
+             "Get ED rotation angle in degrees")
+        .def_prop_ro("rotation_ed", &G4KM2A_Geometry::GetRotationED,
+                     "ED rotation angle in degrees")
+        // Core edge calculation
+        .def("get_core_edge", &G4KM2A_Geometry::GetCoreEdge,
+             nb::arg("x"), nb::arg("y"),
+             "Calculate the distance to the array edge from position (x, y)")
+        .def("__repr__", [](G4KM2A_Geometry& geo) {
+            return "G4KM2A_Geometry(NED=" + std::to_string(geo.GetNED()) +
+                   ", NMD=" + std::to_string(geo.GetNMD()) +
+                   ", NWCDA=" + std::to_string(geo.GetNWCDA()) + ")";
+        });
 }
 

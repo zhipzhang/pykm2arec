@@ -16,6 +16,7 @@
 #include "TTree.h"
 #include "LHEvent.h"
 #include "KM2AMCEvent.hh"
+#include <iostream>
 // ============================================================================
 // 合并的事件结构（包含event_info和LHEvent的信息）
 // ============================================================================
@@ -92,11 +93,10 @@ public:
         if (!file_ || file_->IsZombie()) {
             throw std::runtime_error("Cannot open file: " + filename);
         }
-
-        // 获取event_info树
         event_info_tree_ = dynamic_cast<TTree*>(file_->Get("event_info"));
+
         if (!event_info_tree_) {
-            throw std::runtime_error("Cannot find tree 'event_info' in file: " + filename);
+            std::cerr << "Cannot find tree 'event_info' in file: " << filename << std::endl;
         }
 
         // 获取event树
@@ -106,11 +106,14 @@ public:
         }
 
         // 设置event_info树的branch地址
-        event_info_tree_->SetBranchAddress("eve_id", &br_eve_id_);
-        event_info_tree_->SetBranchAddress("eve_trig", &br_eve_trig_);
-        event_info_tree_->SetBranchAddress("eve_ene", &br_eve_ene_);
-        event_info_tree_->SetBranchAddress("eve_corex", &br_eve_corex_);
-        event_info_tree_->SetBranchAddress("eve_corey", &br_eve_corey_);
+        if(event_info_tree_)
+        {
+            event_info_tree_->SetBranchAddress("eve_id", &br_eve_id_);
+            event_info_tree_->SetBranchAddress("eve_trig", &br_eve_trig_);
+            event_info_tree_->SetBranchAddress("eve_ene", &br_eve_ene_);
+            event_info_tree_->SetBranchAddress("eve_corex", &br_eve_corex_);
+            event_info_tree_->SetBranchAddress("eve_corey", &br_eve_corey_);
+        }
 
         // 设置event树的branch地址
         // 注意：对于对象指针，需要传递指针的地址（&lhevent_），ROOT会自动分配内存
