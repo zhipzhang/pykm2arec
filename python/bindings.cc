@@ -3,7 +3,7 @@
  * @brief Nanobind bindings for KM2A event reading and reconstruction
  * 
  * Exposes LHHit, LHWave, LHEvent, KM2AMCEvent, KM2AEventSource,
- * LHRecEvent, KM2ARecEvent, and KM2AReconstructor to Python
+ * LHRecEvent, KM2ARecEvent, KM2ARecWriter, and KM2AReconstructor to Python
  */
 
 #include <nanobind/nanobind.h>
@@ -16,6 +16,7 @@
 #include "KM2AMCEvent.hh"
 #include "KM2AEventSource.hh"
 #include "KM2ARecEvent.hh"
+#include "KM2ARecWriter.hh"
 #include "KM2AReconstructor.hh"
 #include "G4KM2A_Geometry.h"
 
@@ -379,6 +380,34 @@ NB_MODULE(_pykm2arec, m) {
                    ", rec_energy=" + std::to_string(ev.rec_energy) +
                    ", direction_error=" + std::to_string(ev.direction_error) +
                    ", valid=1)";
+        });
+
+    // ========================================================================
+    // KM2ARecWriter class - Write KM2ARecEvent to ROOT
+    // ========================================================================
+    nb::class_<KM2ARecWriter>(m, "KM2ARecWriter")
+        .def(nb::init<const std::string&>(), nb::arg("path"),
+             "Create a writer that RECREATEs a ROOT file with TTree \"Rec\"")
+        .def(nb::init<const std::string&, const std::string&, const std::string&>(),
+             nb::arg("path"), nb::arg("tree_name"), nb::arg("tree_title"),
+             "Create a writer with custom tree name and title")
+        .def("__call__", &KM2ARecWriter::operator(), nb::arg("rec_event"),
+             "Append one KM2ARecEvent row to the output tree")
+        .def("write", &KM2ARecWriter::operator(), nb::arg("rec_event"),
+             "Append one KM2ARecEvent row (alias for __call__)")
+        .def("close", &KM2ARecWriter::close,
+             "Write and close the file (also called from destructor)")
+        .def("__enter__", [](KM2ARecWriter& self) -> KM2ARecWriter* {
+            return &self;
+        }, nb::rv_policy::reference)
+        .def("__exit__", [](KM2ARecWriter& self,
+                            nb::args) {
+            self.close();
+            return false;
+        })
+        .def_prop_ro("filename", &KM2ARecWriter::filename)
+        .def("__repr__", [](const KM2ARecWriter& w) {
+            return "KM2ARecWriter('" + w.filename() + "')";
         });
 
     // ========================================================================
