@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "RtypesCore.h"
 #include "TFile.h"
 #include "TTree.h"
 
@@ -132,6 +133,7 @@ public:
         tree_->Branch("direction_error", &direction_error_);
         tree_->Branch("nkg_density", &nkg_density_);
         tree_->Branch("valid", &valid_);
+        tree_->Branch("event_id", &event_id); // Optional: store event ID as a separate branch
         tree_->SetAutoSave(1000000);
     }
 
@@ -146,11 +148,13 @@ public:
         if (!tree_ || !file_) {
             throw std::runtime_error("KM2ARecWriter: file is closed");
         }
-        KM2ARecWriterDetail::copyLHRecEvent(rec_buffer_, *ev.recEvent);
+        //KM2ARecWriterDetail::copyLHRecEvent(rec_buffer_, ev.recEvent);
+        rec_buffer_ = ev.recEvent; // 直接赋值整个结构体
         rec_energy_ = ev.rec_energy;
         direction_error_ = ev.direction_error;
         nkg_density_ = ev.nkg_density;
         valid_ = ev.valid;
+        event_id = ev.event_id;
         tree_->Fill();
     }
 
@@ -159,6 +163,7 @@ public:
             return;
         }
         file_->cd();
+        tree_->BuildIndex("event_id");
         file_->Write();
         file_->Close();
         tree_ = nullptr;
@@ -177,6 +182,7 @@ private:
     Double_t direction_error_ = 0;
     Double_t nkg_density_ = 0;
     Double_t valid_ = 0;
+    Int_t event_id = 0;
 };
 
 #endif

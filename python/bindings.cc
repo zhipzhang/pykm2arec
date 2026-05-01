@@ -10,6 +10,9 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/make_iterator.h>
+#include "nanobind/stl/pair.h"
+#include "nanobind/stl/shared_ptr.h"
+#include "nanobind/stl/optional.h"
 
 #include "LHEvent.h"
 #include "LHRecEvent.h"
@@ -19,6 +22,7 @@
 #include "KM2ARecWriter.hh"
 #include "KM2AReconstructor.hh"
 #include "G4KM2A_Geometry.h"
+#include "pyKM2AEvent.hh"
 
 namespace nb = nanobind;
 
@@ -198,6 +202,14 @@ NB_MODULE(_pykm2arec, m) {
             return res;
 
         }, nb::rv_policy::reference)
+        .def_prop_ro("HitsM", [](KM2AMCEvent& ev) {
+            nb::list res;
+            for (int i = 0; i < ev.NHitsM(); i++) {
+                res.append(ev.GetHitM(i));
+            }
+            return res;
+
+        }, nb::rv_policy::reference)
         .def("__repr__", [](const KM2AMCEvent& ev) {
             return "KM2AMCEvent(event_id=" + std::to_string(ev.eventid()) +
                    ", energy=" + std::to_string(ev.energy()) +
@@ -219,6 +231,7 @@ NB_MODULE(_pykm2arec, m) {
         .def("size_event_info", &KM2AEventSource::sizeEventInfo, 
              "Get the number of event_info entries")
         // Indexing
+        .def_ro("geometry", &KM2AEventSource::geometry_, "Access to the geometry instance")
         .def("__getitem__", [](KM2AEventSource& src, Long64_t index) {
             if (index < 0) index += src.size();
             if (index < 0 || index >= src.size()) {
@@ -361,9 +374,9 @@ NB_MODULE(_pykm2arec, m) {
     nb::class_<KM2ARecEvent>(m, "KM2ARecEvent")
         .def(nb::init<>())
         // Access to LHRecEvent
-        .def_prop_ro("rec_event", [](KM2ARecEvent& ev) -> LHRecEvent* {
-            return ev.recEvent.get();
-        }, nb::rv_policy::reference, "Access to the underlying LHRecEvent")
+        .def_prop_ro("rec_event", [](KM2ARecEvent& ev) -> LHRecEvent {
+            return ev.recEvent;
+        }, nb::rv_policy::reference_internal, "Access to the underlying LHRecEvent")
         // Extra reconstruction results
         .def_rw("rec_energy", &KM2ARecEvent::rec_energy, "Reconstructed energy")
         .def_rw("direction_error", &KM2ARecEvent::direction_error, "Direction reconstruction error")
@@ -371,15 +384,28 @@ NB_MODULE(_pykm2arec, m) {
         .def_rw("valid", &KM2ARecEvent::valid, "Validity flag (1=valid, 0=invalid)")
         .def("__repr__", [](const KM2ARecEvent& ev) {
             if (ev.valid == 0) {
-                return std::string("KM2ARecEvent(valid=0)");
+                return std::string("KM2ARecEvent (Observation or invalid simulation event)");
             }
-            return "KM2ARecEvent(rec_theta=" + std::to_string(ev.recEvent->rec_theta) +
-                   ", rec_phi=" + std::to_string(ev.recEvent->rec_phi) +
-                   ", rec_x=" + std::to_string(ev.recEvent->rec_x) +
-                   ", rec_y=" + std::to_string(ev.recEvent->rec_y) +
+            return "KM2ARecEvent(rec_theta=" + std::to_string(ev.recEvent.rec_theta) +
+                   ", rec_phi=" + std::to_string(ev.recEvent.rec_phi) +
+                   ", rec_x=" + std::to_string(ev.recEvent.rec_x) +
+                   ", rec_y=" + std::to_string(ev.recEvent.rec_y) +
                    ", rec_energy=" + std::to_string(ev.rec_energy) +
                    ", direction_error=" + std::to_string(ev.direction_error) +
                    ", valid=1)";
+        });
+
+    // ========================================================================
+    // pyKM2AEvent class - container holding optional MC and reconstructed events
+    // ========================================================================
+    nb::class_<pyKM2AEvent>(m, "pyKM2AEvent")
+        .def(nb::init<>())
+        .def_ro("mc_event", &pyKM2AEvent::mc_event, "Optional KM2AMCEvent (MC truth)")
+        .def_ro("rec_event", &pyKM2AEvent::rec_event, "Optional KM2ARecEvent (reconstructed event)")
+        .def("__repr__", [](const pyKM2AEvent& e) {
+            std::string s = "pyKM2AEvent(mc=" + std::string(e.mc_event ? "present" : "none") +
+                             ", rec=" + std::string(e.rec_event ? "present" : "none") + ")";
+            return s;
         });
 
     // ========================================================================
@@ -564,5 +590,6 @@ NB_MODULE(_pykm2arec, m) {
                    ", NMD=" + std::to_string(geo.GetNMD()) +
                    ", NWCDA=" + std::to_string(geo.GetNWCDA()) + ")";
         });
+        
 }
 

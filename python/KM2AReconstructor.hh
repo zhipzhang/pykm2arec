@@ -26,10 +26,10 @@ class KM2AReconstructor
                 recEvent.valid = 0;
                 return recEvent;
             }
-            reconstructor->eventrecline(mcEvent.lhevent, recEvent.recEvent.get(), 10);
-            recEvent.rec_energy = recer50new3(recEvent.recEvent->rec_Eage, recEvent.recEvent->rec_Esize, recEvent.recEvent->rec_theta);
-            recEvent.direction_error = GetSpaceLC(mcEvent.lhevent->GetTheta(), mcEvent.lhevent->GetPhi(), recEvent.recEvent->rec_theta, recEvent.recEvent->rec_phi);
-            recEvent.nkg_density = getNKGdensity(recEvent.recEvent->rec_Eage, recEvent.recEvent->rec_Esize, 50.);
+            reconstructor->eventrecline(mcEvent.lhevent, &recEvent.recEvent, 10);
+            recEvent.rec_energy = recer50new3(recEvent.recEvent.rec_Eage, recEvent.recEvent.rec_Esize, recEvent.recEvent.rec_theta);
+            recEvent.direction_error = GetSpaceLC(mcEvent.lhevent->GetTheta(), mcEvent.lhevent->GetPhi(), recEvent.recEvent.rec_theta, recEvent.recEvent.rec_phi);
+            recEvent.nkg_density = getNKGdensity(recEvent.recEvent.rec_Eage, recEvent.recEvent.rec_Esize, 50.);
             recEvent.valid = 1;
             return recEvent;
         }

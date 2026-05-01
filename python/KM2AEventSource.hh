@@ -16,7 +16,11 @@
 #include "TTree.h"
 #include "LHEvent.h"
 #include "KM2AMCEvent.hh"
+#include "LHRecEvent.h"
+#include "KM2ARecEvent.hh"
 #include <iostream>
+#include "G4KM2A_Geometry.h"
+#include "pyKM2AEvent.hh"
 // ============================================================================
 // 合并的事件结构（包含event_info和LHEvent的信息）
 // ============================================================================
@@ -50,7 +54,7 @@ public:
         Iterator(KM2AEventSource* source, Long64_t index)
             : source_(source), index_(index) {}
 
-        KM2AMCEvent operator*() const {
+        pyKM2AEvent operator*() const {
             return source_->GetEvent(index_);
         }
 
@@ -117,11 +121,26 @@ public:
 
         // 设置event树的branch地址
         // 注意：对于对象指针，需要传递指针的地址（&lhevent_），ROOT会自动分配内存
-        event_tree_->SetBranchAddress("Event", &lhevent_);
+        // 检查event_tree_是否包含"Event"分支
+        if(event_tree_->GetBranch("Event")) {
+            event_tree_->SetBranchAddress("Event", &lhevent_);
+        }
+        else {
+            std::cout << "[Warning] Cannot find branch 'Event' in tree 'event'" << std::endl;
+        }
+        if(event_tree_->GetBranch("Rec")){
+            event_tree_->SetBranchAddress("Rec", &lhrec_event_);
+        }
+        else {
+            std::cout << "[Warning] Cannot find branch 'Rec' in tree 'event'" << std::endl;
+        }
+
+        geometry_ = std::unique_ptr<G4KM2A_Geometry>(new G4KM2A_Geometry(7));
 
         // 获取entries数量
         n_entries_ = event_tree_->GetEntries();
-        n_event_info_entries_ = event_info_tree_->GetEntries();
+        if(event_info_tree_)
+            n_event_info_entries_ = event_info_tree_->GetEntries();
     }
 
     ~KM2AEventSource() {
@@ -160,7 +179,7 @@ public:
      * @param index 事件索引
      * @return KM2AMCEvent结构
      */
-    KM2AMCEvent operator[](Long64_t index) {
+    auto operator[](Long64_t index) {
         return GetEvent(index);
     }
 
@@ -169,18 +188,23 @@ public:
      * @param index 事件索引
      * @return KM2AMCEvent结构
      */
-    KM2AMCEvent GetEvent(Long64_t index) {
+    pyKM2AEvent GetEvent(Long64_t index) {
         if (index < 0 || index >= n_entries_) {
             throw std::out_of_range("Event index out of range: " + std::to_string(index));
         }
 
-        KM2AMCEvent data;
-
+        pyKM2AEvent event;
+        KM2AMCEvent mc_data;
+        KM2ARecEvent rec_data;
         // 读取event_info（如果索引在范围内）
         event_tree_->GetEntry(index);
-        data.lhevent = lhevent_;
-
-        return data;
+        mc_data.lhevent = lhevent_;
+        if (lhrec_event_ != nullptr) {
+            rec_data.recEvent = *lhrec_event_;
+        }
+        event.rec_event = rec_data;
+        event.mc_event = mc_data;
+        return event;
     }
 
     // ========================================================================
@@ -195,6 +219,7 @@ public:
     // ========================================================================
 
     const std::string& filename() const { return filename_; }
+    std::unique_ptr<G4KM2A_Geometry> geometry_;
 
 private:
     std::string filename_;
@@ -207,7 +232,7 @@ private:
     // LHEvent对象（用于读取event树）
     // 注意：必须使用裸指针并初始化为nullptr，SetBranchAddress需要指针的地址
     LHEvent* lhevent_ = nullptr;
-
+    LHRecEvent* lhrec_event_ = nullptr;
     // event_info树的branch变量
     Int_t br_eve_id_ = 0;
     Int_t br_eve_trig_ = 0;
